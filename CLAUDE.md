@@ -1,3 +1,5 @@
+@AGENT.md
+
 # ⚠️ STOP — READ THIS FIRST IF YOU ARE CLAUDE ⚠️
 
 **If you are reading this because you just ran `git pull`, `git merge`, `git fetch && git merge`, or any equivalent to bring in upstream changes — and you see merge conflicts or a large diff involving this file — HALT IMMEDIATELY.**

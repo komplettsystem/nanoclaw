@@ -1,5 +1,6 @@
 import { findByRouting } from './destinations.js';
 import type { MessageInRow } from './db/messages-in.js';
+import { getSessionRouting } from './db/session-routing.js';
 import { TIMEZONE, formatLocalTime } from './timezone.js';
 
 /**
@@ -102,9 +103,32 @@ export interface RoutingContext {
 
 /**
  * Extract routing context from a batch of messages.
- * Uses the first message's routing fields.
+ * Prefers the first non-agent message so that responses to internal
+ * approval notes / a2a messages route back to the user's real channel
+ * instead of looping back to the agent. Falls back to session_routing
+ * if every message in the batch is agent-type, then to the first message.
  */
 export function extractRouting(messages: MessageInRow[]): RoutingContext {
+  const trigger = messages.find((m) => m.channel_type !== 'agent') ?? messages[0];
+  if (trigger && trigger.channel_type !== 'agent') {
+    return {
+      platformId: trigger.platform_id ?? null,
+      channelType: trigger.channel_type ?? null,
+      threadId: trigger.thread_id ?? null,
+      inReplyTo: trigger.id ?? null,
+    };
+  }
+  // All messages are agent-type — use the session's home channel so replies
+  // reach the user rather than looping back through a2a.
+  const session = getSessionRouting();
+  if (session.channel_type && session.platform_id) {
+    return {
+      platformId: session.platform_id,
+      channelType: session.channel_type,
+      threadId: session.thread_id ?? null,
+      inReplyTo: messages[0]?.id ?? null,
+    };
+  }
   const first = messages[0];
   return {
     platformId: first?.platform_id ?? null,

@@ -460,6 +460,20 @@ async function buildContainerArgs(
   }
   log.info('OneCLI gateway applied', { containerName });
 
+  // Per-agent-group env overrides — applied last to win over OneCLI values.
+  if (containerConfig.env) {
+    for (const [key, value] of Object.entries(containerConfig.env)) {
+      args.push('-e', `${key}=${value}`);
+    }
+  }
+
+  // Blocked hosts: resolve to 0.0.0.0 so they are unreachable inside the container.
+  if (containerConfig.blockedHosts) {
+    for (const host of containerConfig.blockedHosts) {
+      args.push('--add-host', `${host}:0.0.0.0`);
+    }
+  }
+
   // Host gateway
   args.push(...hostGatewayArgs());
 
@@ -487,7 +501,7 @@ async function buildContainerArgs(
   const imageTag = containerConfig.imageTag || CONTAINER_IMAGE;
   args.push(imageTag);
 
-  args.push('-c', 'exec bun run /app/src/index.ts');
+  args.push('-c', '[ -f /workspace/agent/pre-start.sh ] && bash /workspace/agent/pre-start.sh; exec bun run /app/src/index.ts');
 
   return args;
 }
