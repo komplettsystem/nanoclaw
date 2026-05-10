@@ -23,7 +23,8 @@ jobs:
           key: ${{ secrets.HETZNER_SSH_KEY }}
           script: |
             set -euo pipefail
+            git config --global --add safe.directory /opt/nanoclaw
             git -C /opt/nanoclaw pull --ff-only
-            cd /opt/nanoclaw && pnpm install --frozen-lockfile
+            cd /opt/nanoclaw && CI=true pnpm install --frozen-lockfile
             sudo systemctl restart nanoclaw
             echo "Deploy complete: $(date -u)"
