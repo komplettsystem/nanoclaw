@@ -501,7 +501,10 @@ async function buildContainerArgs(
   const imageTag = containerConfig.imageTag || CONTAINER_IMAGE;
   args.push(imageTag);
 
-  args.push('-c', '[ -f /workspace/agent/pre-start.sh ] && bash /workspace/agent/pre-start.sh; exec bun run /app/src/index.ts');
+  args.push(
+    '-c',
+    '[ -f /workspace/agent/pre-start.sh ] && bash /workspace/agent/pre-start.sh; exec bun run /app/src/index.ts',
+  );
 
   return args;
 }
