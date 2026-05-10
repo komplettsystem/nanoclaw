@@ -62,7 +62,9 @@ const SWEEP_INTERVAL_MS = 60_000;
 // Absolute idle ceiling for a running container. If the heartbeat file hasn't
 // been touched in this long, the container is either stuck or doing genuinely
 // nothing — kill and restart on the next inbound.
-export const ABSOLUTE_CEILING_MS = 30 * 60 * 1000;
+// Configurable via CONTAINER_CEILING_MINUTES env var (default: 30).
+const _ceilingMinutes = Number(process.env.CONTAINER_CEILING_MINUTES ?? 30);
+export const ABSOLUTE_CEILING_MS = (Number.isFinite(_ceilingMinutes) && _ceilingMinutes > 0 ? _ceilingMinutes : 30) * 60 * 1000;
 // Stuck tolerance window applied per 'processing' claim — "did we see any
 // signs of life since this message was claimed?"
 export const CLAIM_STUCK_MS = 60 * 1000;
