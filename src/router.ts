@@ -29,7 +29,8 @@ import {
 import { findSessionForAgent } from './db/sessions.js';
 import { startTypingRefresh, stopTypingRefresh } from './modules/typing/index.js';
 import { log } from './log.js';
-import { resolveSession, writeSessionMessage, writeOutboundDirect } from './session-manager.js';
+import { resolveSession, writeSessionMessage, writeOutboundDirect, heartbeatPath } from './session-manager.js';
+import fs from 'node:fs';
 import { wakeContainer } from './container-runner.js';
 import { getSession } from './db/sessions.js';
 import type { AgentGroup, MessagingGroup, MessagingGroupAgent } from './types.js';
@@ -468,6 +469,14 @@ async function deliverToAgent(
     created,
     agentGroupName: agentGroup.name,
   });
+
+  // Extend ceiling: if the container is already running, touch the heartbeat
+  // so a long-running task doesn't get killed while the user is still active.
+  const hbPath = heartbeatPath(session.agent_group_id, session.id);
+  if (fs.existsSync(hbPath)) {
+    const now = new Date();
+    try { fs.utimesSync(hbPath, now, now); } catch { /* ignore */ }
+  }
 
   if (wake) {
     // Typing indicator + wake are only for the engaged branch; accumulated
