@@ -485,6 +485,15 @@ async function buildContainerArgs(
     args.push('-e', 'HOME=/home/node');
   }
 
+  // Pass supplemental groups from the host process so the container can write
+  // to group-shared directories (e.g. groups/<name>/ owned by deploy:nanoclaw).
+  // Without this, the container's uid falls to "other" and only gets r-x.
+  for (const gid of process.getgroups?.() ?? []) {
+    if (gid !== hostGid && gid !== 0) {
+      args.push('--group-add', String(gid));
+    }
+  }
+
   // Volume mounts
   for (const mount of mounts) {
     if (mount.readonly) {
